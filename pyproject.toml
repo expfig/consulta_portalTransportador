@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "consulta-valor-frete-vega"
+version = "0.1.0"
+description = ""
+authors = ["JoaoAnacletoFIG <joao.meira@grupofigueiredo.com.br>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+botcity-maestro-sdk = "^0.4.2"
+selenium = "^4.16.0"
+psycopg2-binary = "^2.9.9"
+pytz = "^2023.3.post1"
+pandas = "^2.1.4"
+lxml = "^5.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
