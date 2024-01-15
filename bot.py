@@ -22,7 +22,7 @@ def main():
         
         for cte_num in bot.cte_nums:
             for item in data:
-                if item['nconh'] == cte_num[0] and item['msg'] != "Não encontrado na base Vega":
+                if item['nconh'] == cte_num[0] and item['msg'] != "Não encontrado na base Vega" and item['alerta'] == "Sim":
                     bot.cte_nums.remove(cte_num)
                     break  
         
