@@ -96,6 +96,7 @@ class PortalTransportador:
                 
     def convert_str_to_float(self, s):
         try:
+            s = str(s)
             s = s.replace(',', '')
             s = s.replace('.', '')
             resultado = float(f"{s[:-2]}.{s[-2:]}")
