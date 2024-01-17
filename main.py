@@ -143,6 +143,7 @@ class PortalTransportador:
         finally:
             if cursor:
                 cursor.close()
+            
                 
     def close_driver(self):
         if self.driver:

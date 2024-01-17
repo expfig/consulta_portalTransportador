@@ -1,3 +1,4 @@
+from babel import numbers
 from botcity.maestro import *
 from main import PortalTransportador
 from datetime import datetime, timedelta
@@ -40,10 +41,14 @@ def main():
             for data in bot.data:
                 alerta = 'Não'
                 if data[5] == "Diferença de valor encontrada":
+                    val_usina = numbers.format_currency(data[6], 'BRL', locale='pt_BR')
+                    val_cte = numbers.format_currency(data[7], 'BRL', locale='pt_BR')
+                    diff = numbers.format_currency(data[8], 'BRL', locale='pt_BR')
+                    date_nf = datetime.strptime(data[4], "%Y-%m-%d").strftime("%d/%m/%Y")
                     maestro.alert(
                         task_id=execution.task_id,
                         title="Frete com valores divergentes encontrado!",
-                        message= f"N conhecimento: {data[1]} - Placa: {data[2]} - Data NFe: {data[4]} - Valor da Usina: {data[6]} - Valor do cte: {data[7]} - Diferença: {data[8]}",
+                        message= f"N conhecimento: {data[1]} - Placa: {data[2]} - Data NFe: {date_nf} - Valor da Usina: {val_usina} - Valor do cte: {val_cte} - Valor divergente: {diff}",
                         alert_type=AlertType.INFO
                     )
                     alerta = 'Sim'
