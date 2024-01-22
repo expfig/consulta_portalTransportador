@@ -40,9 +40,9 @@ def main():
             for data in bot.data:
                 alerta = 'Não'
                 if data[5] == "Diferença de valor encontrada":
-                    val_usina = "R$ {:,.2f}".format(val_usina).replace(",", ";").replace(".", ",").replace(";", ".")
-                    val_cte = "R$ {:,.2f}".format(val_cte).replace(",", ";").replace(".", ",").replace(";", ".")
-                    diff = "R$ {:,.2f}".format(diff).replace(",", ";").replace(".", ",").replace(";", ".")
+                    val_usina = "R$ {:,.2f}".format(data[6]).replace(",", ";").replace(".", ",").replace(";", ".")
+                    val_cte = "R$ {:,.2f}".format(data[7]).replace(",", ";").replace(".", ",").replace(";", ".")
+                    diff = "R$ {:,.2f}".format(data[8]).replace(",", ";").replace(".", ",").replace(";", ".")
                     date_nf = datetime.strptime(data[4], "%Y-%m-%d").strftime("%d/%m/%Y")
                     maestro.alert(
                         task_id=execution.task_id,
