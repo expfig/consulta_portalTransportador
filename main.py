@@ -81,7 +81,14 @@ class PortalTransportador:
         page.click()
 
     def navigate_to_ordens_page(self):
-        page = self.driver.find_element(By.ID, self.settings.get("ORDENS_PAGE_DIV_ID"))
+        page = WebDriverWait(
+            self.driver, self.settings.get("TIMEOUT_LOADING_PAGE")
+        ).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, self.settings.get("ORDENS_PAGE_DIV_CSS_SELECTOR"))
+            )
+        )
+
         page.click()
 
     def search_ctes(self):
@@ -114,20 +121,22 @@ class PortalTransportador:
         relatorio_button.click()
 
     def verify_weight_coil(self, nconh):
-        nconh_input = WebDriverWait(
-            self.driver, self.settings.get("TIMEOUT_LOADING_PAGE")
-        ).until(
-            EC.presence_of_element_located((By.ID, self.settings.get("NTRSP_INPUT_ID")))
+        time.sleep(1.5)
+        WebDriverWait(self.driver, self.settings.get("TIMEOUT_LOADING_PAGE")).until(
+            EC.presence_of_element_located(
+                (By.XPATH, self.settings.get("NTRSP_INPUT_XPATH"))
+            )
         )
+        inputs = self.driver.find_elements(By.CSS_SELECTOR, "input")
+        print(inputs)
+        nconh_input = inputs[0]
         nconh_input.send_keys(nconh)
 
-        local_trsp_input = self.driver.find_element(
-            By.ID, self.settings.get("LOCAL_TRSP_ORDEM_ID")
-        )
+        local_trsp_input = inputs[4]
         local_trsp_input.send_keys(self.settings.get("LOCAL_ORG_TRSP"))
 
         exibir_button = self.driver.find_element(
-            By.ID, self.settings.get("EXIBE_ORDENS_ID")
+            By.CSS_SELECTOR, self.settings.get("EXIBE_ORDENS_CSS_SELECTOR")
         )
         exibir_button.click()
 
@@ -135,7 +144,7 @@ class PortalTransportador:
             self.driver, self.settings.get("TIMEOUT_LOADING_PAGE")
         ).until(
             EC.presence_of_element_located(
-                (By.ID, self.settings.get("CHECKBOX_NCONH_ID"))
+                (By.CSS_SELECTOR, self.settings.get("CHECKBOX_NCONH_CSS_SELECTOR"))
             )
         )
         checkbox.click()
@@ -144,7 +153,7 @@ class PortalTransportador:
             self.driver, self.settings.get("TIMEOUT_LOADING_TABLE")
         ).until(
             EC.presence_of_element_located(
-                (By.XPATH, self.settings.get("TABLE_ORDENS_ID"))
+                (By.XPATH, self.settings.get("TABLE_ORDENS_XPATH"))
             )
         )
         html_content = table.get_attribute("outerHTML")
