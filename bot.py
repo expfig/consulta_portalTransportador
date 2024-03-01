@@ -1,6 +1,7 @@
 from botcity.maestro import *
 from main import PortalTransportador
 from datetime import datetime, timedelta
+from db import db_logs
 
 BotMaestroSDK.RAISE_NOT_CONNECTED = False
 
@@ -14,24 +15,25 @@ def main():
     db_password = maestro.get_credential(
         label="consulta_PortalTransportador", key="DB_PASSWORD"
     )
-
+    user_db = maestro.get_credential(label="db_log", key="user")
+    password_db = maestro.get_credential(label="db_log", key="password")
     try:
         bot = PortalTransportador(execution.parameters, portal_password, db_password)
         bot.connect_to_postgres()
         bot.get_cte_tg99()
-        date = datetime.now() - timedelta(days=3)
-        date = date.strftime("%d/%m/%Y")
-        data = maestro.get_log(activity_label="consulta_PortalTransportador", date=date)
-
+        db = db_logs(user_db, password_db)
+        data = db.get_alerts()
+        filter_data = []
         for cte_num in bot.cte_nums:
+            skip = False
             for item in data:
-                if (
-                    item["nconh"] == cte_num[0]
-                    and item["msg"] != "Não encontrado na base Vega"
-                    and item["alerta"] == "Sim"
-                ):
-                    bot.cte_nums.remove(cte_num)
+                if item[0] == cte_num[0] and item[1] != "Não encontrado na base Vega":
+                    skip = True
                     break
+            if not skip:
+                filter_data.append(cte_num)
+        bot.cte_nums = filter_data
+        print(bot.cte_nums)
 
         if len(bot.cte_nums) > 0:
             bot.initialize_driver()
@@ -86,6 +88,7 @@ def main():
                         alert_type=AlertType.INFO,
                     )
                     alerta = "Sim"
+                db.insert_logs(data[1], data[5])
 
                 maestro.new_log_entry(
                     activity_label="consulta_PortalTransportador",
