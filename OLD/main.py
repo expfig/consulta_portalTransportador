@@ -99,9 +99,9 @@ class PortalTransportador:
                 (By.ID, self.settings.get("LOCAL_ORG_TRSP_START_ID"))
             )
         )
-        local_trsp_end_input = self.driver.find_element(
-            By.ID, self.settings.get("LOCAL_ORG_TRSP_END_ID")
-        )
+        # local_trsp_end_input = self.driver.find_element(
+        #     By.ID, self.settings.get("LOCAL_ORG_TRSP_END_ID")
+        # )
         date_trsp_start_input = self.driver.find_element(
             By.ID, self.settings.get("DATA_TRSP_START_ID")
         )
@@ -111,8 +111,8 @@ class PortalTransportador:
         relatorio_button = self.driver.find_element(
             By.ID, self.settings.get("EXIBE_RELATORIO_ID")
         )
-        local_trsp_start_input.send_keys(self.settings.get("LOCAL_ORG_TRSP"))
-        local_trsp_end_input.send_keys(self.settings.get("LOCAL_ORG_TRSP"))
+        # local_trsp_start_input.send_keys(self.settings.get("LOCAL_ORG_TRSP"))
+        # local_trsp_end_input.send_keys(self.settings.get("LOCAL_ORG_TRSP"))
         today = datetime.now(self.tz).strftime("%d.%m.%Y")
         yesterday = datetime.now(self.tz) - timedelta(days=1)
         yesterday = yesterday.strftime("%d.%m.%Y")
@@ -197,6 +197,8 @@ class PortalTransportador:
                     0,
                     0,
                     0,
+                    cte_num[5],
+                    cte_num[6],
                 ]
                 self.data.append(data_array)
             else:
@@ -239,6 +241,8 @@ class PortalTransportador:
             cte_num[4],
             diff,
             ntrsp,
+            cte_num[5],
+            cte_num[6],
         ]
         self.data.append(data_array)
 
@@ -261,7 +265,8 @@ class PortalTransportador:
             rows = cursor.fetchall()
             sorted_list = sorted(rows, key=lambda x: int(x[0]), reverse=True)
             formatted_data_list = [
-                (a, b, c, d.strftime("%Y-%m-%d"), e) for a, b, c, d, e in sorted_list
+                (a, b, c, d.strftime("%Y-%m-%d"), e, f, g)
+                for a, b, c, d, e, f, g in sorted_list
             ]
             self.cte_nums = formatted_data_list
             return formatted_data_list
