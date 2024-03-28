@@ -200,28 +200,38 @@ class PortalTransportador:
                 "msg": "",
                 "alerta": False,
             }
-            doc = str(cte.doctransp)
-            doc = doc.replace(" ", "")
-            line = df.loc[df["Trsp."] == doc]
-            if line.empty:
-                dados["msg"] = "CTE não encontrado no portal Vega"
-                self.result_data.append(dados)
+            doc = str(cte.doctransp).replace(" ", "")
+            nconh = str(cte.nconh).replace(" ", "")
+            df["CTRC/CT"].fillna("", inplace=True)
+            df["Trsp."].fillna("", inplace=True)
+
+            doc_line = df[df["Trsp."].str.contains(doc)]
+            if not doc_line.empty:
+                line = doc_line.iloc[0]
             else:
-                usina_value = self.convert_str_to_float(
-                    line["Valor Frete Líquido"].values[0]
-                ) + self.convert_str_to_float(line["Impostos"].values[0])
-                usina_value = round(usina_value, 2)
-                diff = usina_value - cte.basecalc
-                diff = round(diff, 2)
-                if abs(diff) >= float(config("max_diff")):
-                    msg = f"Diferença de valor encontrada"
-                    dados["alerta"] = True
+                nconh_line = df[df["CTRC/CT"].str.contains(nconh)]
+                if not nconh_line.empty:
+                    line = nconh_line.iloc[0]
                 else:
-                    msg = f"OK"
-                dados["valor_usina"] = usina_value
-                dados["diferenca_valor"] = diff
-                dados["msg"] = msg
-                self.result_data.append(dados)
+                    dados["msg"] = "CTE não encontrado no portal Vega"
+                    self.result_data.append(dados)
+                    continue
+
+            usina_value = self.convert_str_to_float(
+                line["Valor Frete Líquido"]
+            ) + self.convert_str_to_float(line["Impostos"])
+            usina_value = round(usina_value, 2)
+            diff = usina_value - cte.basecalc
+            diff = round(diff, 2)
+            if abs(diff) >= float(config("max_diff")):
+                msg = f"Diferença de valor encontrada"
+                dados["alerta"] = True
+            else:
+                msg = f"OK"
+            dados["valor_usina"] = usina_value
+            dados["diferenca_valor"] = diff
+            dados["msg"] = msg
+            self.result_data.append(dados)
 
     def set_logs(self):
         for data in self.result_data:
@@ -241,7 +251,7 @@ class PortalTransportador:
                 alerta=data["alerta"],
             )
 
-    def send_email(self, maestro, execution):
+    def send_email_alert(self, maestro, execution):
         for data in self.result_data:
             if data["alerta"]:
                 val_usina = (
@@ -265,45 +275,19 @@ class PortalTransportador:
                 date_nf = datetime.strptime(data["data_nf"], "%Y-%m-%d").strftime(
                     "%d/%m/%Y"
                 )
-                message = f"N conhecimento: {data['cte']} - Placa: {data['veiculo']} - Data NFe: {date_nf} - Valor da Usina: {val_usina} - Valor do cte: {val_cte} - Valor divergente: {diff} - Origem: {data['origem']} - Destino: {data['destino']}"
+                message = f"CTE EMITIDO COM VALOR DIVERGENTE. - conhecimento: {data['cte']} - Placa: {data['veiculo']} - Data NFe: {date_nf} - Valor da Usina: {val_usina} - Valor do cte: {val_cte} - Valor divergente: {diff} - Origem: {data['origem']} - Destino: {data['destino']}"
+
+                self.db_sgt20.transaction(
+                    config("query_insert_alert"),
+                    alert_id=config("alert_id", default=16),
+                    msg=message,
+                )
 
                 maestro.alert(
                     task_id=execution.task_id,
                     title="Frete com valores divergentes encontrado!",
                     message=message,
                     alert_type=AlertType.INFO,
-                )
-
-    def set_alert_table(self):
-        alert_id = 16
-        for data in self.result_data:
-            if data["alerta"]:
-                val_usina = (
-                    "R$ {:,.2f}".format(data["valor_usina"])
-                    .replace(",", ";")
-                    .replace(".", ",")
-                    .replace(";", ".")
-                )
-                val_cte = (
-                    "R$ {:,.2f}".format(data["valor_cte"])
-                    .replace(",", ";")
-                    .replace(".", ",")
-                    .replace(";", ".")
-                )
-                diff = (
-                    "R$ {:,.2f}".format(data["diferenca_valor"])
-                    .replace(",", ";")
-                    .replace(".", ",")
-                    .replace(";", ".")
-                )
-                date_nf = datetime.strptime(data["data_nf"], "%Y-%m-%d").strftime(
-                    "%d/%m/%Y"
-                )
-
-                message = f"CTE EMITIDO COM VALOR DIVERGENTE. - conhecimento: {data['cte']} - Placa: {data['veiculo']} - Data NFe: {date_nf} - Valor da Usina: {val_usina} - Valor do cte: {val_cte} - Valor divergente: {diff} - Origem: {data['origem']} - Destino: {data['destino']}"
-
-                self.db_sgt20.transaction(
-                    config("query_insert_alert"), alert_id=alert_id, msg=message
                 )
 
 
@@ -332,7 +316,7 @@ def main():
             )
             bot.process_ctes(ctes, df)
         bot.set_logs()
-        bot.send_email(maestro, execution)
+        bot.send_email_alert(maestro, execution)
         bot.driver.quit()
         maestro.finish_task(
             task_id=execution.task_id,
