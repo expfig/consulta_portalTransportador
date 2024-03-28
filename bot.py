@@ -157,13 +157,17 @@ class PortalTransportador:
         relatorio_button.click()
 
     def get_table_results(self):
-        table = WebDriverWait(
-            self.driver, config("timeout_loading_table_result")
-        ).until(
-            EC.presence_of_element_located(
-                (By.XPATH, config("portal_table_result_xpath").replace("||", "="))
+        try:
+            table = WebDriverWait(
+                self.driver, config("timeout_loading_table_result")
+            ).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, config("portal_table_result_xpath").replace("||", "="))
+                )
             )
-        )
+        except:
+            return pd.DataFrame()
+
         html_content = table.get_attribute("outerHTML")
         df = pd.read_html(StringIO(html_content))[0]
         df_filtered = df[df["Trsp."].notnull()]
@@ -320,6 +324,8 @@ def main():
             bot.navigate_to_custo_frete()
             bot.search_ctes()
             df = bot.get_table_results()
+            if df.empty:
+                continue
             dt_process = bot.get_data_processada()
             ctes = bot.get_data_ctes(
                 tags=companys[company]["tags"], processados=dt_process
@@ -328,6 +334,11 @@ def main():
         bot.set_logs()
         bot.send_email(maestro, execution)
         bot.driver.quit()
+        maestro.finish_task(
+            task_id=execution.task_id,
+            status=AutomationTaskFinishStatus.SUCCESS,
+            message="Tarefa foi concluída com sucesso.",
+        )
     except Exception as e:
         print(e)
         logger.error(e, exc_info=True)
